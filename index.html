@@ -535,7 +535,7 @@ function showToast() {
 }
 
 /* ── 구글맵 연결 ── */
-const GOOGLE_API_KEY = 'AIzaSyAHMZtNK2rVCOlXdy3zfV7tgUxaaraHa0s';
+window.initGoogleMap = initGoogleMap;
 
 let googleMap = null;
 
@@ -582,13 +582,9 @@ function initGoogleMap() {
   });
 }
 
-if (GOOGLE_API_KEY !== 'AIzaSyAHMZtNK2rVCOlXdy3zfV7tgUxaaraHa0s') {
-  const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&callback=initGoogleMap`;
-  script.async = true;
-  script.defer = true;
-  document.head.appendChild(script);
-}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHMZtNK2rVCOlXdy3zfV7tgUxaaraHa0s&callback=initGoogleMap" async defer></script>
+<script>
 
 /* ── 초기 렌더 ── */
 renderList();
