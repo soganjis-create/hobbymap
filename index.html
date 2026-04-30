@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>대동덕지도 🗺️</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0e17;
+      --surface: #1a1828;
+      --card: #221f35;
+      --border: #2e2a45;
+      --accent: #ff6b6b;
+      --accent2: #ffd93d;
+      --accent3: #6bcb77;
+      --text: #f0eeff;
+      --muted: #9d97c0;
+      --toy:   #ff6b6b;
+      --stationery: #ffd93d;
+      --figurecafe: #c77dff;
+      --figurerest: #ff9f43;
+      --exhibit: #6bcb77;
+      --popup: #4dc9f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 22px;
+      color: var(--accent2);
+      white-space: nowrap;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px;
+      gap: 8px;
+    }
+    .search-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      width: 100%;
+      padding: 8px 0;
+    }
+    .search-bar input::placeholder { color: var(--muted); }
+
+    .report-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .report-btn:hover { opacity: .85; }
+
+    /* ── CATEGORY FILTER ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .chip.active, .chip:hover {
+      color: #fff;
+      border-color: currentColor;
+    }
+    .chip[data-cat="all"].active       { color: var(--accent2); border-color: var(--accent2); }
+    .chip[data-cat="toy"].active       { color: var(--toy);        border-color: var(--toy); }
+    .chip[data-cat="stationery"].active{ color: var(--stationery); border-color: var(--stationery); }
+    .chip[data-cat="figurecafe"].active{ color: var(--figurecafe); border-color: var(--figurecafe); }
+    .chip[data-cat="figurerest"].active{ color: var(--figurerest); border-color: var(--figurerest); }
+    .chip[data-cat="exhibit"].active   { color: var(--exhibit);    border-color: var(--exhibit); }
+    .chip[data-cat="popup"].active     { color: var(--popup);      border-color: var(--popup); }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── MAP ── */
+    #map {
+      flex: 1;
+      position: relative;
+      background: #1a1828;
+    }
+
+    /* 카카오맵 로드 전 플레이스홀더 */
+    .map-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--muted);
+    }
+    .map-placeholder .map-icon { font-size: 64px; }
+    .map-placeholder p { font-size: 15px; text-align: center; line-height: 1.6; }
+    .map-placeholder code {
+      display: inline-block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 13px;
+      color: var(--accent2);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 320px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .sidebar-header strong { color: var(--text); font-size: 15px; }
+
+    .place-list {
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .place-card {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .12s;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .place-card:hover { background: var(--card); }
+    .place-card.active { background: var(--card); }
+
+    .place-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .place-info { flex: 1; min-width: 0; }
+    .place-name {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .place-addr {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .place-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: min(480px, 94vw);
+      max-height: 90dvh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+    }
+    .modal h2 {
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 22px;
+      color: var(--accent2);
+      margin-bottom: 20px;
+    }
+    .modal .close-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent2); }
+    .form-group select option { background: var(--card); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'Black Han Sans', sans-serif;
+      font-size: 17px;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .submit-btn:hover { opacity: .88; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent3);
+      color: #0f0e17;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      z-index: 999;
+      transition: transform .3s ease;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 640px) {
+      .sidebar { display: none; }
+      .logo { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">대동<span>덕</span>지도</div>
+  <div class="search-bar">
+    <span>🔍</span>
+    <input id="searchInput" type="text" placeholder="장소 이름, 지역 검색..." oninput="filterPlaces()" />
+  </div>
+  <button class="report-btn" onclick="openModal()">+ 제보하기</button>
+</header>
+
+<!-- CATEGORY FILTER -->
+<div class="filter-bar">
+  <div class="chip active" data-cat="all"    onclick="setCategory('all')">🗺️ 전체</div>
+  <div class="chip"        data-cat="toy"    onclick="setCategory('toy')">🧸 장난감샵</div>
+  <div class="chip"        data-cat="stationery" onclick="setCategory('stationery')">✏️ 문방구</div>
+  <div class="chip"        data-cat="figurecafe" onclick="setCategory('figurecafe')">🗿 피규어카페</div>
+  <div class="chip"        data-cat="figurerest" onclick="setCategory('figurerest')">🍜 피규어식당</div>
+  <div class="chip"        data-cat="exhibit" onclick="setCategory('exhibit')">🖼️ 전시</div>
+  <div class="chip"        data-cat="popup"  onclick="setCategory('popup')">🎪 팝업</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div id="map">
+    <div class="map-placeholder">
+      <div class="map-icon">🗺️</div>
+      <p>
+        구글맵 API 키를 연결하면<br>지도가 여기에 표시됩니다.<br><br>
+        <code>index.html</code> 상단의<br>
+        <code>YOUR_GOOGLE_API_KEY</code>를 교체해 주세요.
+      </p>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <strong id="placeCount">0</strong>개의 장소
+    </div>
+    <div class="place-list" id="placeList"></div>
+  </div>
+</div>
+
+<!-- 제보 MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <h2>📍 장소 제보하기</h2>
+    <div class="form-group">
+      <label>장소 이름 *</label>
+      <input id="f_name" type="text" placeholder="예) 홍대 피규어샵 코코" />
+    </div>
+    <div class="form-group">
+      <label>카테고리 *</label>
+      <select id="f_cat">
+        <option value="">선택해주세요</option>
+        <option value="toy">🧸 장난감샵</option>
+        <option value="stationery">✏️ 문방구</option>
+        <option value="figurecafe">🗿 피규어카페</option>
+        <option value="figurerest">🍜 피규어식당</option>
+        <option value="exhibit">🖼️ 전시</option>
+        <option value="popup">🎪 팝업</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>주소 *</label>
+      <input id="f_addr" type="text" placeholder="예) 서울 마포구 홍익로 5길 24" />
+    </div>
+    <div class="form-group">
+      <label>한줄 소개</label>
+      <textarea id="f_desc" placeholder="어떤 곳인지 간단히 소개해주세요!"></textarea>
+    </div>
+    <button class="submit-btn" onclick="submitReport()">제보 등록하기 🎉</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ 제보가 접수되었습니다!</div>
+
+<script>
+/* ── 카테고리 메타 ── */
+const CAT = {
+  toy:        { label: '🧸 장난감샵',  color: '#ff6b6b', bg: 'rgba(255,107,107,.15)' },
+  stationery: { label: '✏️ 문방구',    color: '#ffd93d', bg: 'rgba(255,217,61,.15)'  },
+  figurecafe: { label: '🗿 피규어카페', color: '#c77dff', bg: 'rgba(199,125,255,.15)' },
+  figurerest: { label: '🍜 피규어식당', color: '#ff9f43', bg: 'rgba(255,159,67,.15)'  },
+  exhibit:    { label: '🖼️ 전시',      color: '#6bcb77', bg: 'rgba(107,203,119,.15)' },
+  popup:      { label: '🎪 팝업',      color: '#4dc9f6', bg: 'rgba(77,201,246,.15)'  },
+};
+
+/* ── 샘플 데이터 ── */
+let places = [
+  { id:1, name:'무너상회',          cat:'toy',        addr:'서울 마포구 양화로23길 6',    desc:'희귀 빈티지 장난감 전문 편집샵',           lat:37.5536, lng:126.9228 },
+  { id:2, name:'문구왕',            cat:'stationery', addr:'서울 종로구 인사동길 44',     desc:'감성 문구 & 수입 노트 전문점',             lat:37.5744, lng:126.9848 },
+  { id:3, name:'피규어브런치',       cat:'figurecafe', addr:'서울 용산구 한강대로 23길 5', desc:'피규어 전시 + 커피 즐기는 카페',          lat:37.5299, lng:126.9648 },
+  { id:4, name:'덕후식당 봉황',      cat:'figurerest', addr:'서울 강남구 역삼로 77',       desc:'애니 굿즈 장식 가득한 일식당',            lat:37.5007, lng:127.0367 },
+  { id:5, name:'원피스 특별전시',    cat:'exhibit',    addr:'서울 서초구 강남대로 93길',   desc:'원피스 25주년 기념 대형 전시',            lat:37.5044, lng:127.0238 },
+  { id:6, name:'산리오 팝업스토어',  cat:'popup',      addr:'서울 마포구 홍익로 5',        desc:'산리오 신캐릭터 론칭 팝업 (~6/30)',       lat:37.5563, lng:126.9238 },
+  { id:7, name:'키덜트킹덤',        cat:'toy',        addr:'서울 강남구 테헤란로 108',    desc:'레고, 건담, 마블 피규어 대형매장',         lat:37.5047, lng:127.0497 },
+  { id:8, name:'종이나라 플래그십',  cat:'stationery', addr:'서울 중구 퇴계로 51',         desc:'종이접기·공예 재료 & 문구 플래그십',      lat:37.5602, lng:126.9799 },
+  { id:9, name:'가챠마니아 카페',    cat:'figurecafe', addr:'서울 마포구 와우산로 35',     desc:'가챠 뽑기 + 티타임 복합카페',             lat:37.5511, lng:126.9242 },
+  { id:10,'name':'나루토 팝업',      cat:'popup',      addr:'서울 용산구 이태원로 200',    desc:'나루토X보루토 컬래버 팝업 (~5/15)',        lat:37.5345, lng:126.9943 },
+];
+let nextId = 11;
+
+let activeCategory = 'all';
+
+/* ── 필터 ── */
+function setCategory(cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+  renderList();
+}
+
+function filterPlaces() { renderList(); }
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  return places.filter(p => {
+    const catOk = activeCategory === 'all' || p.cat === activeCategory;
+    const qOk   = !q || p.name.toLowerCase().includes(q) || p.addr.toLowerCase().includes(q);
+    return catOk && qOk;
+  });
+}
+
+/* ── 사이드바 렌더 ── */
+function renderList() {
+  const list = getFiltered();
+  document.getElementById('placeCount').textContent = list.length;
+  const el = document.getElementById('placeList');
+  el.innerHTML = list.map(p => {
+    const c = CAT[p.cat];
+    return `
+    <div class="place-card" onclick="selectPlace(${p.id})">
+      <div class="place-icon" style="background:${c.bg};font-size:22px">${c.label.split(' ')[0]}</div>
+      <div class="place-info">
+        <div class="place-name">${p.name}</div>
+        <div class="place-addr">📍 ${p.addr}</div>
+        <span class="place-tag" style="background:${c.bg};color:${c.color}">${c.label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectPlace(id) {
+  document.querySelectorAll('.place-card').forEach((el, i) => {
+    el.classList.toggle('active', getFiltered()[i]?.id === id);
+  });
+}
+
+/* ── 제보 모달 ── */
+function openModal()  { document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function submitReport() {
+  const name = document.getElementById('f_name').value.trim();
+  const cat  = document.getElementById('f_cat').value;
+  const addr = document.getElementById('f_addr').value.trim();
+  const desc = document.getElementById('f_desc').value.trim();
+  if (!name || !cat || !addr) { alert('이름, 카테고리, 주소는 필수입니다!'); return; }
+  places.unshift({ id: nextId++, name, cat, addr, desc, lat:37.5665, lng:126.9780 });
+  closeModal();
+  document.getElementById('f_name').value = '';
+  document.getElementById('f_cat').value  = '';
+  document.getElementById('f_addr').value = '';
+  document.getElementById('f_desc').value = '';
+  renderList();
+  showToast();
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ── 구글맵 연결 ── */
+function initGoogleMap() {
+  document.querySelector('.map-placeholder').style.display = 'none';
+  const googleMap = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 37.5665, lng: 126.9780 },
+    zoom: 12,
+    styles: [
+      { elementType: 'geometry', stylers: [{ color: '#1a1828' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#9d97c0' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1828' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2e2a45' }] },
+      { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0f0e17' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f0e17' }] },
+      { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#221f35' }] },
+    ]
+  });
+
+  places.forEach(p => {
+    const c = CAT[p.cat];
+    const marker = new google.maps.Marker({
+      position: { lat: p.lat, lng: p.lng },
+      map: googleMap,
+      title: p.name,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: c.color,
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+      }
+    });
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: '<div style="padding:8px 12px;font-family:sans-serif;font-size:13px;font-weight:700;color:#222">' + c.label.split(' ')[0] + ' ' + p.name + '<br><span style="font-weight:400;font-size:11px;color:#666">' + p.addr + '</span></div>'
+    });
+
+    marker.addListener('click', () => {
+      infoWindow.open(googleMap, marker);
+      selectPlace(p.id);
+    });
+  });
+}
+
+/* ── 초기 렌더 ── */
+renderList();
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&callback=initGoogleMap" async defer></script>
+
+<!-- ★ 광고 자리: 카카오 애드핏 코드를 아래에 붙여넣으세요 ★ -->
+<!--
+<ins class="kakao_ad_area" style="display:none;"
+  data-ad-unit="..."
+  data-ad-width="..."
+  data-ad-height="..."></ins>
+<script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+-->
+
+</body>
+</html>
